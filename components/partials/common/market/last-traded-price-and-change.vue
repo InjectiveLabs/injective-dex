@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-col items-end">
-    <div class="flex items-center tracking-wide" :class="{ 'text-xs': !lg }">
+    <div
+      class="flex items-center tracking-wide leading-none"
+      :class="{ 'text-xs': !lg }"
+    >
       <v-icon-arrow
         v-if="!lastTradedPrice.isNaN() && lastTradedPrice.gt(0)"
         class="transform w-3 h-3 mr-1"
@@ -131,9 +134,11 @@ export default Vue.extend({
     },
 
     lastTradedPriceToFormat(): string {
-      const { lastTradedPrice } = this
+      const { lastTradedPrice, market } = this
 
-      return lastTradedPrice.toFormat(UI_DEFAULT_PRICE_DISPLAY_DECIMALS)
+      return lastTradedPrice.toFormat(
+        market?.priceDecimals || UI_DEFAULT_PRICE_DISPLAY_DECIMALS
+      )
     },
 
     quoteVolume(): BigNumberInBase {
