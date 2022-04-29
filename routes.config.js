@@ -8,16 +8,18 @@ const {
 const mainnetSpot = [
   'inj-usdt',
   'huahua-usdt',
+  'evmos-usdt',
   'ape-usdt',
   'atom-usdt',
   'weth-usdt',
+  'huahua-usdt',
   'link-usdt',
   'ust-usdt',
   'luna-ust',
   'gf-usdt'
 ]
 const testnetSpot = [...mainnetSpot]
-const mainnetStagingSpot = [...mainnetSpot, 'evmos-usdt']
+const mainnetStagingSpot = [...mainnetSpot]
 const spot = IS_TESTNET
   ? testnetSpot
   : IS_MAINNET_STAGING
