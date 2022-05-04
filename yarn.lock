@@ -2056,6 +2056,16 @@
     link-module-alias "^1.2.0"
     shx "^0.3.2"
 
+"@injectivelabs/networks@^0.5.3":
+  version "0.5.3"
+  resolved "https://registry.npmjs.org/@injectivelabs/networks/-/networks-0.5.3.tgz#85c94958374d6fbf2b2c2eea9140ee7535529837"
+  integrity sha512-BUqJsuHAAH+yAD45LtU/qaoiQ6lY0Pop9A5B50Elub+4H0N9D+/VAQVn0IUL147KxV4B1OcGeCV2x2IMhLj0EQ==
+  dependencies:
+    "@injectivelabs/exceptions" "^0.5.1"
+    "@injectivelabs/utils" "^0.5.1"
+    link-module-alias "^1.2.0"
+    shx "^0.3.2"
+
 "@injectivelabs/referral-api@^1.0.20":
   version "1.0.20"
   resolved "https://registry.yarnpkg.com/@injectivelabs/referral-api/-/referral-api-1.0.20.tgz#cd405deb7c62346b112f9dfd0ab0ccda78fbd107"
@@ -2113,6 +2123,21 @@
   version "0.5.13"
   resolved "https://registry.npmjs.org/@injectivelabs/token-metadata/-/token-metadata-0.5.13.tgz#73854d11313672f9cc58260b78589403b680c297"
   integrity sha512-2y7MVfm3wH3mlwxaGKPQoALpT9iGeAzHPsHPwnpgcKqRWgjsbcX3cdh9RxxezqL6bnYdAWu+bfnYXACb1pxE3g==
+  dependencies:
+    "@injectivelabs/networks" "^0.5.3"
+    "@injectivelabs/ts-types" "^0.5.1"
+    "@types/lodash.values" "^4.3.6"
+    copyfiles "^2.4.1"
+    jsonschema "^1.4.0"
+    link-module-alias "^1.2.0"
+    lodash "^4.17.21"
+    lodash.values "^4.3.0"
+    shx "^0.3.2"
+
+"@injectivelabs/token-metadata@^0.5.8":
+  version "0.5.8"
+  resolved "https://registry.npmjs.org/@injectivelabs/token-metadata/-/token-metadata-0.5.8.tgz#796b0c877290ac993472caea40ccc23cbee1cfe0"
+  integrity sha512-WiJJWCcmCbdXxvjBjrC1Anp2siVxAdTqNhzWaYZIHnTsfdnK6QpdNUW+Nsa9Pswtw27Fia2hXj8CXmzEvIUnLg==
   dependencies:
     "@injectivelabs/networks" "^0.5.3"
     "@injectivelabs/ts-types" "^0.5.1"
