@@ -83,7 +83,6 @@ jobs:
             '/root/cypress/integration/website/portfolio-tests.ts',
             '/root/cypress/integration/website/activity-tests.ts'
           ]
-        groups: ['markets & connections', 'portfolio', 'activity']
     needs: build
     env:
       DEX_IMAGE_TAG: $GIT_BRANCH_NAME
@@ -151,7 +150,7 @@ jobs:
           export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
           export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
           export CYPRESS_SPEC_FILE=${{ matrix.specs }}
-          export CYPRESS_GROUP=${{ matrix.groups }}
+          export CYPRESS_GROUP=${{ matrix.specs }}
           export CYPRESS_BUILD_ID=${{ env.CYPRESS_GROUP }}
           export BASE_URL="http://localhost/"
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
