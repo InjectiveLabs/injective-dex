@@ -83,8 +83,7 @@ jobs:
             '/root/cypress/integration/website/portfolio-tests.ts',
             '/root/cypress/integration/website/activity-tests.ts'
           ]
-        groups:
-        ['markets & connections', 'portfolio', 'activity']
+        groups: ['markets & connections', 'portfolio', 'activity']
     needs: build
     env:
       DEX_IMAGE_TAG: $GIT_BRANCH_NAME
