@@ -154,7 +154,7 @@ jobs:
           export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
           export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
           export CYPRESS_SPEC_FILE=${{ matrix.specs }}
-          export CYPRESS_GROUP= ${{ steps.uuid.outputs.UUID }}
+          export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
           export CYPRESS_BUILD_ID=${{ env.CYPRESS_GROUP }}
           export BASE_URL="http://localhost/"
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
