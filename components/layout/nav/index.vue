@@ -24,11 +24,12 @@
       </NavItem>
 
       <NavItem
-        :to="{ name: 'swap-swap', query: { from: 'inj', to: 'usdt' } }"
+        v-if="isStagingOrTestnetOrDevnet"
+        :to="{ name: 'convert-convert', query: { from: 'usdt', to: 'inj' } }"
         class="block"
-        data-cy="header-swaps-link"
+        data-cy="header-convert-link"
       >
-        {{ $t('navigation.swap') }}
+        {{ $t('navigation.convert') }}
       </NavItem>
 
       <NavItemDummy
@@ -117,6 +118,7 @@ import Vue from 'vue'
 import NavItem from './item.vue'
 import NavItemDummy from './item-dummy.vue'
 import PopperBox from '~/components/elements/popper-box.vue'
+import { IS_DEVNET, IS_STAGING, IS_TESTNET } from '~/app/utils/constants'
 
 export default Vue.extend({
   components: {
@@ -139,6 +141,10 @@ export default Vue.extend({
 
     $popper(): any {
       return this.$refs['popper-rewards-dropdown']
+    },
+
+    isStagingOrTestnetOrDevnet(): boolean {
+      return IS_TESTNET || IS_DEVNET || IS_STAGING
     }
   },
 

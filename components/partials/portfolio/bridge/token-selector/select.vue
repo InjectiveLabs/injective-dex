@@ -24,8 +24,7 @@
         @click.native="handleDropdownToggle"
       >
         <template #open-indicator="{ attributes }">
-          <span v-bind="attributes" class="cursor-pointer">
-          </span>
+          <span v-bind="attributes" class="cursor-pointer"> </span>
         </template>
 
         <template #selected-option="{ symbol, logo, name }">
@@ -33,10 +32,13 @@
             v-slot="{ errors, valid }"
             name="amount"
             class="w-full"
-            :rules="validationRules || `required|positiveNumber|enoughBalance:0.0001,${balanceToFixed}`"
+            :rules="
+              validationRules ||
+              `required|positiveNumber|enoughBalance:0.0001,${balanceToFixed}`
+            "
           >
-            <div class="flex flex-col">
-              <div class="flex items-center w-full">
+            <div class="flex justify-between gap-4 items-center">
+              <div class="flex flex-col w-full justify-center">
                 <v-input
                   id="bridge-input"
                   dense
@@ -44,65 +46,86 @@
                   :lg="lg"
                   transparent-bg
                   type="number"
-                  step="0.01"
+                  :step="step"
                   min="0"
-                  placeholder="0.0000"
+                  :placeholder="step"
                   :errors="errors"
                   hide-errors
                   :valid="valid"
                   :max="balanceToFixed"
-                  :max-decimals="value.decimals"
+                  :max-decimals="maxDecimals"
                   :max-selector="!disableMaxSelector && balance.gt(0.0001)"
                   :max-classes="'input-max-button'"
                   :value="amount"
                   :prefix="prefix"
-                  :input-classes="prefix ? 'pl-0' : ''"
+                  :input-classes="inputClass"
                   data-cy="token-selector-amount-input"
+                  :disabled="disabled"
+                  disable-addon-padding
                   @input="handleAmountChange"
                   @input-max="handleMax"
                   @blur="resetIsSearching"
                   @mousedown.native.stop="focusInput"
                 />
-                <img
-                  v-if="logo"
-                  :src="logo"
-                  :alt="name"
-                  class="rounded-full w-4 h-4"
-                />
-                <IconCategoryAlt v-else class="rounded-full w-4 h-4" />
-                <span
-                  class="font-bold text-lg px-3 text-gray-200 tracking-wide break-normal"
-                  data-cy="token-selector-selected-text-content"
-                >
-                  {{ symbol }}
-                </span>
-                <div class="block pr-4 text-white">
-                  <IconCaretDownSlim />
+                <div class="pl-4">
+                  <span
+                    v-if="!showErrorsBelow && errors.length > 0"
+                    class="text-red-400 text-[12px]"
+                  >
+                    {{ errors[0] }}
+                  </span>
+                  <span
+                    v-else-if="usdPrice !== ''"
+                    class="text-gray-500 text-[12px]"
+                  >
+                    {{ usdPrice }} USD
+                  </span>
                 </div>
               </div>
-              <div class="flex items-center justify-between w-full px-4 mt-1">
-              <span v-if="errors.length > 0" class="text-red-400 text-[12px]">{{ errors[0] }}</span>
-                <span v-else-if="usdPrice !== ''" class="text-gray-500 text-[12px]">
-                  {{ usdPrice }} USD
-                </span>
-                <span v-else />
-                <span
-                  v-if="showBalance"
-                  class="text-[12px]"
-                  :class="{
-                    'text-red-400': errors.length > 0,
-                    'text-primary-600': errors.length === 0
-                  }"
-                >
-                  {{ $t('bridge.balance') }}: {{ balanceToFixed }}
-                </span>
+              <div class="flex flex-col">
+                <div class="flex justify-end items-center h-[32px] ml-4">
+                  <img
+                    v-if="logo"
+                    :src="logo"
+                    :alt="name"
+                    class="rounded-full w-4 h-4"
+                  />
+                  <IconCategoryAlt v-else class="rounded-full w-4 h-4" />
+                  <span
+                    class="font-bold text-lg px-3 text-gray-200 tracking-wide break-normal"
+                    data-cy="token-selector-selected-text-content"
+                  >
+                    {{ symbol }}
+                  </span>
+                  <div class="block pr-4 text-white">
+                    <IconCaretDownSlim />
+                  </div>
+                </div>
+                <div v-if="showBalance" class="pr-4 h-5 relative">
+                  <span
+                    class="text-[12px] whitespace-nowrap absolute right-4 top-0"
+                    :class="{
+                      'text-red-400': errors.length > 0,
+                      'text-primary-600': errors.length === 0
+                    }"
+                  >
+                    {{ $t('bridge.balance') }}: {{ balanceToFixed }}
+                  </span>
+                </div>
               </div>
             </div>
+            <span
+              v-if="showErrorsBelow && errors.length > 0"
+              data-cy="reusable-input-bellow-error-text-content"
+              class="text-red-400 absolute text-xs mt-[28px]"
+            >
+              {{ errors[0] }}
+            </span>
           </ValidationProvider>
         </template>
 
         <template #list-header>
-          <li class="mb-4 mt-2">
+          <li class="mb-4">
             <v-input
               id="bridge-input-search"
               v-model="search"
@@ -110,6 +133,8 @@
               round
               :placeholder="$t('common.search')"
               data-cy="token-selector-search"
+              :wrapper-classes="'shadow-none'"
+              :input-classes="'bg-gray-800 rounded-lg'"
               @blur="resetIsSearching"
               @click.native.stop="focusSearchInput"
             >
@@ -119,10 +144,7 @@
         </template>
 
         <template #option="item">
-          <v-token-selector-item
-            :item="item"
-            :dense="dense"
-          />
+          <v-token-selector-item :item="item" :dense="dense" />
         </template>
       </v-select>
     </ValidationObserver>
@@ -136,7 +158,8 @@ import vSelect from 'vue-select'
 import { BigNumberInBase } from '@injectivelabs/utils'
 import {
   BankBalanceWithTokenAndBalanceInBase,
-  BIG_NUMBER_ROUND_DOWN_MODE
+  BIG_NUMBER_ROUND_DOWN_MODE,
+  getDecimalsFromNumber
 } from '@injectivelabs/ui-common'
 import VTokenSelectorItem from './item.vue'
 import { UI_DEFAULT_DISPLAY_DECIMALS } from '~/app/utils/constants'
@@ -178,6 +201,11 @@ export default Vue.extend({
       required: true
     },
 
+    balanceDecimalPlaces: {
+      type: Number,
+      default: UI_DEFAULT_DISPLAY_DECIMALS
+    },
+
     showBalance: {
       type: Boolean,
       default: false
@@ -216,6 +244,16 @@ export default Vue.extend({
     lg: {
       type: Boolean,
       default: false
+    },
+
+    showErrorsBelow: {
+      type: Boolean,
+      default: false
+    },
+
+    step: {
+      type: String,
+      default: '0.01'
     }
   },
 
@@ -229,13 +267,32 @@ export default Vue.extend({
   },
 
   computed: {
-    balanceToFixed(): string {
-      const { balance } = this
+    maxDecimals(): Number {
+      const { step, value } = this
 
-      return balance.toFixed(
-        UI_DEFAULT_DISPLAY_DECIMALS,
-        BIG_NUMBER_ROUND_DOWN_MODE
-      )
+      if (step) {
+        return getDecimalsFromNumber(Number(step))
+      }
+
+      return value.decimals
+    },
+
+    inputClass(): string {
+      const { prefix } = this
+
+      const classes = ['text-lg font-bold']
+
+      if (prefix) {
+        classes.push('pl-0')
+      }
+
+      return classes.join(' ')
+    },
+
+    balanceToFixed(): string {
+      const { balance, balanceDecimalPlaces } = this
+
+      return balance.toFixed(balanceDecimalPlaces, BIG_NUMBER_ROUND_DOWN_MODE)
     },
 
     filteredOptions(): BankBalanceWithTokenAndBalanceInBase[] {

@@ -2,37 +2,37 @@
   <div class="mt-6 flex flex-col">
     <div class="flex items-start justify-between my-1">
       <span class="text-gray-500 uppercase tracking-widest font-bold text-xs">
-        {{ $t('trade.swap.rate') }}
+        {{ $t('trade.convert.rate') }}
       </span>
       <span v-if="pending" class="text-sm">
-        {{ $t('trade.swap.fetching_price') }}...
+        {{ $t('trade.convert.fetching_price') }}...
       </span>
       <span v-else-if="hasAmount" class="text-sm">
-        1 {{ fromToken.symbol }} = {{ rateToFormat }} {{ toToken.symbol }}
+        1 {{ fromToken.symbol }} = {{ averagePriceWithoutSlippageToFormat }} {{ toToken.symbol }}
       </span>
       <span v-else class="text-sm"> -- </span>
     </div>
     <div class="flex items-center justify-between my-1">
       <span class="text-gray-500 uppercase tracking-widest font-bold text-xs">
-        {{ $t('trade.swap.fee') }} 0.12%
+        {{ $t('trade.convert.fee') }} {{ feeRateToFormat }}%
       </span>
       <span v-if="hasAmount" class="text-sm">
-        ≈ {{ fee }} {{ toToken.symbol }}
+        ≈ {{ feeToFormat }} {{ market.quoteToken.symbol }}
       </span>
       <span v-else class="text-sm"> -- </span>
     </div>
-    <div class="flex items-center justify-between my-1">
+    <!-- <div class="flex items-center justify-between my-1">
       <span class="text-gray-500 uppercase tracking-widest font-bold text-xs">
-        {{ $t('trade.swap.price_impact') }}
+        {{ $t('trade.convert.estimated_slippage') }}
       </span>
       <span v-if="hasAmount" class="text-sm">
-        ≈ {{ priceImpactToFormat }}%
+        ≈ {{ estimatedSlippageToFormat }}%
       </span>
       <span v-else class="text-sm"> -- </span>
-    </div>
+    </div> -->
     <div class="flex items-center justify-between my-1">
       <span class="text-gray-500 uppercase tracking-widest font-bold text-xs">
-        {{ $t('trade.swap.minimum_received') }}
+        {{ $t('trade.convert.minimum_received') }}
       </span>
       <span v-if="hasAmount" class="text-sm">
         {{ minimumReceivedToFormat }} {{ toToken.symbol }}
@@ -47,6 +47,7 @@ import Vue from 'vue'
 import { BigNumberInBase } from '@injectivelabs/utils'
 import {
   cosmosSdkDecToBigNumber,
+  // getDecimalsFromNumber,
   SpotOrderSide,
   UiPriceLevel,
   UiSpotOrderbook,
@@ -78,6 +79,11 @@ export default Vue.extend({
       required: true
     },
 
+    fee: {
+      type: BigNumberInBase,
+      required: true
+    },
+
     market: {
       type: Object,
       required: true
@@ -94,6 +100,16 @@ export default Vue.extend({
     },
 
     slippage: {
+      type: BigNumberInBase,
+      required: true
+    },
+
+    fromAmount: {
+      type: BigNumberInBase,
+      required: true
+    },
+
+    toAmount: {
       type: BigNumberInBase,
       required: true
     },
@@ -135,71 +151,22 @@ export default Vue.extend({
       return !amount.isNaN() && amount.gt(0) && amount.gte(amountStep)
     },
 
-    rate(): BigNumberInBase {
-      return this.calculateExecutionPriceForAmount(ONE_IN_BASE)
+    feeRate(): BigNumberInBase {
+      const { takerFeeRate, takerFeeRateDiscount } = this
+
+      return takerFeeRate.times(ONE_IN_BASE.minus(takerFeeRateDiscount))
     },
 
-    rateToFormat(): string {
-      const { rate } = this
+    feeRateToFormat(): string {
+      const { feeRate } = this
 
-      return rate.toFormat(UI_DEFAULT_PRICE_DISPLAY_DECIMALS)
+      return feeRate.times(100).toFormat()
     },
 
-    fee(): string {
-      const {
-        amount,
-        executionPrice,
-        takerFeeRate,
-        takerFeeRateDiscount,
-        market
-      } = this
+    feeToFormat(): string {
+      const { fee, market } = this
 
-      const decimalPlaces = market
-        ? market.priceDecimals
-        : UI_DEFAULT_PRICE_DISPLAY_DECIMALS
-
-      if (amount.isNaN()) {
-        return ZERO_IN_BASE.toFormat(decimalPlaces)
-      }
-
-      const discount = new BigNumberInBase(1).minus(takerFeeRateDiscount)
-
-      return executionPrice
-        .times(amount)
-        .times(takerFeeRate)
-        .times(discount)
-        .toFormat(decimalPlaces)
-    },
-
-    executionPrice(): BigNumberInBase {
-      const {
-        orderType,
-        sells,
-        buys,
-        hasAmount,
-        market,
-        slippage,
-        amount
-      } = this
-
-      if (!market) {
-        return ZERO_IN_BASE
-      }
-
-      if (!hasAmount) {
-        return ZERO_IN_BASE
-      }
-
-      const records = orderType === SpotOrderSide.Buy ? sells : buys
-      const worstPrice = calculateWorstExecutionPriceFromOrderbook({
-        records,
-        amount,
-        market
-      })
-
-      return new BigNumberInBase(
-        worstPrice.times(slippage).toFixed(market.priceDecimals)
-      )
+      return fee.toFormat(market.quoteToken.decimals)
     },
 
     orderbook(): UiSpotOrderbook | undefined {
@@ -267,66 +234,93 @@ export default Vue.extend({
       return this.$accessor.exchange.feeDiscountAccountInfo
     },
 
-    priceImpact(): BigNumberInBase {
-      const { averagePrice, worstPrice } = this
+    estimatedSlippage(): BigNumberInBase {
+      const { executionPrice, worstPrice } = this
 
-      if (averagePrice.eq(worstPrice)) {
+      if (executionPrice.eq(worstPrice)) {
         return ZERO_IN_BASE
       }
 
-      // |avg_price - worst_price| * 100 / avg_price
-      return averagePrice.minus(worstPrice).times(100).dividedBy(averagePrice)
+      // abs(execution_price - worst_price) * 100 / execution_price
+      return new BigNumberInBase(executionPrice.minus(worstPrice).abs())
+        .times(100)
+        .dividedBy(executionPrice)
     },
 
-    priceImpactToFormat(): string {
-      const { priceImpact } = this
+    estimatedSlippageToFormat(): string {
+      const { estimatedSlippage } = this
 
-      return priceImpact.toFormat(2)
+      return estimatedSlippage.toFormat(2)
     },
 
-    averagePrice(): BigNumberInBase {
-      const {
-        orderType,
-        sells,
-        buys,
-        hasAmount,
-        market,
-        slippage,
-        amount
-      } = this
-
-      if (!market || !hasAmount) {
-        return ZERO_IN_BASE
-      }
+    executionPrice(): BigNumberInBase {
+      const { orderType, sells, buys, hasAmount, market, amount } = this
 
       const records = orderType === SpotOrderSide.Buy ? sells : buys
+
+      if (!market || !hasAmount || records.length === 0) {
+        return ZERO_IN_BASE
+      }
+
       const averagePrice = calculateAverageExecutionPriceFromOrderbook({
         records,
         amount,
         market
       })
 
-      return new BigNumberInBase(
-        averagePrice.times(slippage).toFixed(market.priceDecimals)
-      )
+      return new BigNumberInBase(averagePrice.toFixed(market.priceDecimals))
     },
 
-    worstPrice(): BigNumberInBase {
+    averagePriceWithoutSlippage(): BigNumberInBase {
       const {
         orderType,
-        slippage,
         sells,
         buys,
         hasAmount,
         market,
-        amount
+        fromAmount,
+        toAmount
       } = this
+
+      const records = orderType === SpotOrderSide.Buy ? sells : buys
+
+      if (!market || !hasAmount || records.length === 0) {
+        return ZERO_IN_BASE
+      }
+
+      const amount = new BigNumberInBase(
+        orderType === SpotOrderSide.Buy ? toAmount : fromAmount
+      )
+
+      if (amount.eq(ZERO_IN_BASE)) {
+        return ZERO_IN_BASE
+      }
+
+      const averagePrice = calculateAverageExecutionPriceFromOrderbook({
+        records,
+        amount,
+        market
+      })
+
+      return new BigNumberInBase(averagePrice.toFixed(market.priceDecimals))
+    },
+
+    averagePriceWithoutSlippageToFormat(): string {
+      const { averagePriceWithoutSlippage } = this
+
+      return averagePriceWithoutSlippage.toFormat()
+    },
+
+    worstPrice(): BigNumberInBase {
+      const { orderType, slippage, sells, buys, hasAmount, market, amount } =
+        this
 
       if (!market || !hasAmount) {
         return ZERO_IN_BASE
       }
 
       const records = orderType === SpotOrderSide.Buy ? sells : buys
+
       const worstPrice = calculateWorstExecutionPriceFromOrderbook({
         records,
         amount,
@@ -340,34 +334,37 @@ export default Vue.extend({
 
     minimumReceived(): BigNumberInBase {
       const {
-        averagePrice,
+        executionPrice,
         orderType,
-        takerFeeRate,
+        feeRate,
         slippage,
         hasAmount,
         amount
       } = this
 
-      if (!hasAmount) {
+      if (!hasAmount || executionPrice.eq(ZERO_IN_BASE)) {
         return ZERO_IN_BASE
       }
 
-      const slippageTolerance = ONE_IN_BASE.minus(slippage)
+      const slippageTolerance = ONE_IN_BASE.minus(slippage).abs()
+
       const orderTypeBuy = orderType === SpotOrderSide.Buy
 
       const slippageFactor = orderTypeBuy
         ? ONE_IN_BASE.plus(slippageTolerance)
         : ONE_IN_BASE.minus(slippageTolerance)
-      const fee = orderTypeBuy
-        ? ONE_IN_BASE.plus(takerFeeRate)
-        : ONE_IN_BASE.minus(takerFeeRate)
-      const averagePriceWithSlippageAndFee = averagePrice
-        .times(slippageFactor)
-        .times(fee)
 
       return orderTypeBuy
-        ? amount.dividedBy(averagePriceWithSlippageAndFee)
-        : amount.times(averagePriceWithSlippageAndFee)
+        ? amount.dividedBy(
+            executionPrice
+              .times(slippageFactor)
+              .times(ONE_IN_BASE.plus(feeRate))
+          )
+        : amount.times(
+            executionPrice
+              .times(slippageFactor)
+              .times(ONE_IN_BASE.minus(feeRate))
+          )
     },
 
     minimumReceivedToFormat(): string {

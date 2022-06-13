@@ -22,17 +22,9 @@
           <ul class="divide-y divide-gray-800 border-gray-700 rounded-lg">
             <Metamask />
             <Keplr />
-            <Torus v-if="isStagingOrTestnetOrDevnet" />
+            <Torus />
             <Ledger @wallet-ledger-connecting="handleLedgerConnectingWallet" />
-            <Trezor
-              v-if="isStagingOrTestnetOrDevnet"
-              @wallet-trezor-connecting="handleTrezorConnectingWallet"
-            />
-            <li class="text-xs text-gray-300 px-4 py-2">
-              <p class="text-center leading-4">
-                * {{ $t('connect.trezorConnectionNote') }}
-              </p>
-            </li>
+            <Trezor @wallet-trezor-connecting="handleTrezorConnectingWallet" />
           </ul>
         </VHocLoading>
       </div>
