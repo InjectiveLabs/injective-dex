@@ -8,6 +8,8 @@ jobs:
     name: 'Build images for tests'
     runs-on: ubuntu-20.04
     timeout-minutes: 20
+    env:
+      DEX_FEE_RECIPIENT: ${{ secrets.APP_FEE_RECIPIENT }}
     steps:
       - name: Get branch name
         id: git-branch-name
@@ -86,9 +88,9 @@ jobs:
     needs: build
     env:
       DEX_IMAGE_TAG: $GIT_BRANCH_NAME
-      DEX_FEE_RECIPIENT: ${{ secrets.APP_FEE_RECIPIENT }}
       DEX_ALCHEMY_API_KOVAN_KEY: ${{ secrets.APP_ALCHEMY_KOVAN_KEY }}
       EXCHANGE_ALCHEMY_API_KOVAN_KEY: ${{ secrets.APP_ALCHEMY_KOVAN_KEY }}
+      EXCHANGE_FEE_PAYER_PK: ${{ secrets.APP_CI_EXCHANGE_FEE_PAYER_PK }}
       CYPRESS_TEST_TAG: $GIT_BRANCH_NAME
       CYPRESS_BUILD_ID: '$GIT_BRANCH_NAME-${{ github.sha }}-${{ github.run_attempt }}'
       CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
