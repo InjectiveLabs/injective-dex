@@ -86,7 +86,7 @@ jobs:
           [
             '/root/cypress/integration/website/wallet-connections.ts,/root/cypress/integration/website/markets-tests.ts',
             '/root/cypress/integration/website/portfolio-tests.ts',
-            '/root/cypress/integration/website/activity/derivatives-activity-tests.ts'
+            '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
             '/root/cypress/integration/website/activity/spot-activity-tests.ts',
             '/root/cypress/integration/website/activity/positions-activity-tests.ts'
           ]
