@@ -84,8 +84,8 @@ jobs:
       matrix:
         specs:
           [
-            '/root/cypress/integration/website/wallet-connections.ts,/root/cypress/integration/website/markets-tests.ts',
-            '/root/cypress/integration/website/portfolio-tests.ts',
+            '/root/cypress/integration/website/wallets/wallets-connections.ts,/root/cypress/integration/website/markets/markets-tests.ts',
+            '/root/cypress/integration/website/portfolio/portfolio-tests.ts',
             '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
             '/root/cypress/integration/website/activity/spot-activity-tests.ts',
             '/root/cypress/integration/website/activity/positions-activity-tests.ts'
