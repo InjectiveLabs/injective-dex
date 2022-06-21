@@ -4,7 +4,7 @@
       v-slot="{ errors: { amount: inputErrors } }"
       ref="bridge-token-input"
     >
-      <v-select
+      <VSelect
         id="bridge-input-select"
         v-bind="$attrs"
         ref="tokenSelector"
@@ -39,21 +39,21 @@
           >
             <div class="flex justify-between gap-4 items-center">
               <div class="flex flex-col w-full justify-center">
-                <v-input
+                <VInput
                   id="bridge-input"
                   dense
                   :small="small"
                   :lg="lg"
                   transparent-bg
                   type="number"
-                  step="0.01"
+                  :step="step"
                   min="0"
-                  placeholder="0.0000"
+                  :placeholder="step"
                   :errors="errors"
                   hide-errors
                   :valid="valid"
                   :max="balanceToFixed"
-                  :max-decimals="value.decimals"
+                  :max-decimals="maxDecimals"
                   :max-selector="!disableMaxSelector && balance.gt(0.0001)"
                   :max-classes="'input-max-button'"
                   :value="amount"
@@ -83,7 +83,7 @@
                 </div>
               </div>
               <div class="flex flex-col">
-                <div class="flex justify-end items-center">
+                <div class="flex justify-end items-center h-[32px] ml-4">
                   <img
                     v-if="logo"
                     :src="logo"
@@ -101,9 +101,9 @@
                     <IconCaretDownSlim />
                   </div>
                 </div>
-                <div v-if="showBalance" class="pr-4">
+                <div v-if="showBalance" class="pr-4 h-5 relative">
                   <span
-                    class="text-[12px] whitespace-nowrap"
+                    class="text-[12px] whitespace-nowrap absolute right-4 top-0"
                     :class="{
                       'text-red-400': errors.length > 0,
                       'text-primary-600': errors.length === 0
@@ -126,7 +126,7 @@
 
         <template #list-header>
           <li class="mb-4">
-            <v-input
+            <VInput
               id="bridge-input-search"
               v-model="search"
               dense
@@ -139,14 +139,14 @@
               @click.native.stop="focusSearchInput"
             >
               <IconSearch slot="addon" class="w-6 h-6" />
-            </v-input>
+            </VInput>
           </li>
         </template>
 
         <template #option="item">
-          <v-token-selector-item :item="item" :dense="dense" />
+          <TokenSelectorItem :item="item" :dense="dense" />
         </template>
-      </v-select>
+      </VSelect>
     </ValidationObserver>
   </div>
 </template>
@@ -154,19 +154,19 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 import { ValidationObserver, ValidationProvider } from 'vee-validate'
-import vSelect from 'vue-select'
+import VSelect from 'vue-select'
 import { BigNumberInBase } from '@injectivelabs/utils'
 import {
   BankBalanceWithTokenAndBalanceInBase,
   BIG_NUMBER_ROUND_DOWN_MODE
-} from '@injectivelabs/ui-common'
-import VTokenSelectorItem from './item.vue'
+} from '@injectivelabs/sdk-ui-ts'
+import TokenSelectorItem from './item.vue'
 import { UI_DEFAULT_DISPLAY_DECIMALS } from '~/app/utils/constants'
 
 export default Vue.extend({
   components: {
-    vSelect,
-    VTokenSelectorItem,
+    VSelect,
+    TokenSelectorItem,
     ValidationObserver,
     ValidationProvider
   },
@@ -198,6 +198,11 @@ export default Vue.extend({
     balance: {
       type: Object as PropType<BigNumberInBase>,
       required: true
+    },
+
+    balanceDecimalPlaces: {
+      type: Number,
+      default: UI_DEFAULT_DISPLAY_DECIMALS
     },
 
     showBalance: {
@@ -243,6 +248,16 @@ export default Vue.extend({
     showErrorsBelow: {
       type: Boolean,
       default: false
+    },
+
+    step: {
+      type: String,
+      default: '0.01'
+    },
+
+    maxDecimals: {
+      type: Number,
+      default: UI_DEFAULT_DISPLAY_DECIMALS
     }
   },
 
@@ -269,12 +284,9 @@ export default Vue.extend({
     },
 
     balanceToFixed(): string {
-      const { balance } = this
+      const { balance, balanceDecimalPlaces } = this
 
-      return balance.toFixed(
-        UI_DEFAULT_DISPLAY_DECIMALS,
-        BIG_NUMBER_ROUND_DOWN_MODE
-      )
+      return balance.toFixed(balanceDecimalPlaces, BIG_NUMBER_ROUND_DOWN_MODE)
     },
 
     filteredOptions(): BankBalanceWithTokenAndBalanceInBase[] {
