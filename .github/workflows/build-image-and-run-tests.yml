@@ -1,0 +1,163 @@
+name: Build test image and run tests
+
+on:
+  push:
+
+jobs:
+  build:
+    name: 'Build images for tests'
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    steps:
+      - name: Get branch name
+        id: git-branch-name
+        uses: EthanSK/git-branch-name-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Checkout injective-dex
+        uses: actions/checkout@master
+        with:
+          repository: InjectiveLabs/injective-dex
+          ref: ${{ github.ref }}
+          path: ./injective-dex
+      - name: Restore cached Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-single-buildx-${{ env.GIT_BRANCH_NAME }}
+          restore-keys: |
+            ${{ runner.os }}-single-buildx
+      - name: Build DEX image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./injective-dex/
+          file: ./injective-dex/.github/Dockerfile
+          push: false
+          tags: public.ecr.aws/l9h3g6c6/injective-dex:${{ env.GIT_BRANCH_NAME }}
+          outputs: type=docker,dest=/tmp/dex-image.tar
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          build-args: |
+            DEX_FEE_RECIPIENT=${{ secrets.APP_FEE_RECIPIENT }}
+            EXCHANGE_ALCHEMY_API_KOVAN_KEY='https://eth-kovan.alchemyapi.io/v2/${{ secrets.APP_ALCHEMY_KOVAN_KEY }}'
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+      - name: Upload DEX artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: dex-image
+          path: /tmp/dex-image.tar
+      - name: Checkout cypress-ts repo
+        uses: actions/checkout@master
+        with:
+          repository: Tofel/cypress-ts
+          ref: 'f/bump_ts_packages'
+          token: ${{ secrets.BARTEKS_PAT }}
+          path: ./cypress-ts
+      - name: Build Cypress test image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./cypress-ts
+          file: ./cypress-ts/.github/Dockerfile
+          push: false
+          tags: injective-cypress:${{ env.GIT_BRANCH_NAME }}
+          outputs: type=docker,dest=/tmp/cypress-image.tar
+      - name: Upload Cypress artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: cypress-image
+          path: /tmp/cypress-image.tar
+          retention-days: 1
+  run_cypress_tests:
+    name: 'Run Cypress intergration tests'
+    runs-on: ubuntu-20.04
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        specs: [
+            # '/root/cypress/integration/docker-healthcheck/docker-tests.ts'
+            # '/root/cypress/integration/website/wallets/wallets-connections.ts,/root/cypress/integration/website/markets/markets-tests.ts',
+            '/root/cypress/integration/website/portfolio/portfolio-tests.ts',
+            # '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
+            # '/root/cypress/integration/website/activity/spot-activity-tests.ts',
+            '/root/cypress/integration/website/activity/positions-activity-tests.ts'
+          ]
+    needs: build
+    env:
+      DEX_IMAGE_TAG: $GIT_BRANCH_NAME
+      DEX_ALCHEMY_API_KOVAN_KEY: ${{ secrets.APP_ALCHEMY_KOVAN_KEY }}
+      EXCHANGE_ALCHEMY_API_KOVAN_KEY: ${{ secrets.APP_ALCHEMY_KOVAN_KEY }}
+      EXCHANGE_FEE_PAYER_PK: ${{ secrets.APP_CI_EXCHANGE_FEE_PAYER_PK }}
+      CYPRESS_TEST_TAG: $GIT_BRANCH_NAME
+      CYPRESS_BUILD_ID: '$GIT_BRANCH_NAME-${{ github.sha }}-${{ github.run_attempt }}'
+      CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+    steps:
+      - name: Generate UUID
+        id: uuid
+        run: |
+          echo "::set-output name=UUID::$(uuidgen)"
+      - name: Get branch name
+        id: git-branch-name
+        uses: EthanSK/git-branch-name-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Download DEX artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dex-image
+          path: /tmp
+      - name: Download Cypress artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: cypress-image
+          path: /tmp
+      - name: Load Docker images
+        run: |
+          docker load --input /tmp/dex-image.tar
+          docker load --input /tmp/cypress-image.tar
+      - name: Checkout injective-devops
+        uses: actions/checkout@master
+        with:
+          repository: InjectiveLabs/injective-devops
+          ref: 'f/adjust_to_july_2022_upgrade'
+          token: ${{ secrets.BARTEKS_PAT }}
+          path: ./injective-devops
+      - name: Download Docker images
+        run: |
+          DOCKER_IMAGES=('public.ecr.aws/l9h3g6c6/injective-exchange:prod' 'public.ecr.aws/l9h3g6c6/injective-core:prod' 'public.ecr.aws/l9h3g6c6/injective-trading-bot:latest' 'public.ecr.aws/l9h3g6c6/injective-liquidator-bot:latest')
+          echo "Downloading all docker images required by standalone network"
+          echo "Using throttle to avoid Amazon ECR's rate limting."
+          for image in "${DOCKER_IMAGES[@]}"
+          do
+            echo "Pulling image: $image"
+            attempts=0
+            until docker pull "$image"
+            do
+              [[ attempts -eq 15 ]] && echo "Reached maximum attempts of 15!" && exit 1
+              echo "Cooling down for 10 seconds."
+              sleep 10
+              ((attempts++))
+            done
+          done
+          echo "All images downloaded"
+      - name: Start standalone network
+        run: |
+          cd injective-devops/network/standalone
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
+      - name: Execute Cypress tests
+        run: |
+          cd injective-devops/network/standalone
+          export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
+          export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
+          export CYPRESS_SPEC_FILE=${{ matrix.specs }}
+          export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
+          export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
+          export BASE_URL="http://localhost/"
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
