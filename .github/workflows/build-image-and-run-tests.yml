@@ -77,17 +77,18 @@ jobs:
     name: 'Run Cypress intergration tests'
     runs-on: ubuntu-20.04
     timeout-minutes: 80
-    # strategy:
-    #   fail-fast: false
-    #   matrix:
-    #     specs:
-    #       [
+    strategy:
+      fail-fast: false
+      matrix:
+        specs:
+          [
+              '/root/cypress/integration/docker-healthcheck/docker-tests.ts'
     #         '/root/cypress/integration/website/wallets/wallets-connections.ts,/root/cypress/integration/website/markets/markets-tests.ts',
     #         '/root/cypress/integration/website/portfolio/portfolio-tests.ts',
     #         '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
     #         '/root/cypress/integration/website/activity/spot-activity-tests.ts',
     #         '/root/cypress/integration/website/activity/positions-activity-tests.ts'
-    #       ]
+          ]
     needs: build
     env:
       DEX_IMAGE_TAG: $GIT_BRANCH_NAME
@@ -150,15 +151,14 @@ jobs:
         run: |
           cd injective-devops/network/standalone
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}
-          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up
-      # docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
-      # - name: Execute Cypress tests
-      #   run: |
-      #     cd injective-devops/network/standalone
-      #     export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
-      #     export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
-      #     export CYPRESS_SPEC_FILE=${{ matrix.specs }}
-      #     export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
-      #     export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
-      #     export BASE_URL="http://localhost/"
-      #     docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
+      - name: Execute Cypress tests
+        run: |
+          cd injective-devops/network/standalone
+          export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
+          export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
+          export CYPRESS_SPEC_FILE=${{ matrix.specs }}
+          export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
+          export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
+          export BASE_URL="http://localhost/"
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
