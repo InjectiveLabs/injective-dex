@@ -125,7 +125,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: InjectiveLabs/injective-devops
-          ref: 'f/standalone_tweak'
+          ref: 'f/adjust_to_july_2022_upgrade'
           token: ${{ secrets.BARTEKS_PAT }}
           path: ./injective-devops
       - name: Download Docker images
