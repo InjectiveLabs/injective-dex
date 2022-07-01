@@ -8,8 +8,6 @@ jobs:
     name: 'Build images for tests'
     runs-on: ubuntu-20.04
     timeout-minutes: 20
-    env:
-      DEX_FEE_RECIPIENT: ${{ secrets.APP_FEE_RECIPIENT }}
     steps:
       - name: Get branch name
         id: git-branch-name
@@ -79,17 +77,17 @@ jobs:
     name: 'Run Cypress intergration tests'
     runs-on: ubuntu-20.04
     timeout-minutes: 80
-    strategy:
-      fail-fast: false
-      matrix:
-        specs:
-          [
-            '/root/cypress/integration/website/wallets/wallets-connections.ts,/root/cypress/integration/website/markets/markets-tests.ts',
-            '/root/cypress/integration/website/portfolio/portfolio-tests.ts',
-            '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
-            '/root/cypress/integration/website/activity/spot-activity-tests.ts',
-            '/root/cypress/integration/website/activity/positions-activity-tests.ts'
-          ]
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     specs:
+    #       [
+    #         '/root/cypress/integration/website/wallets/wallets-connections.ts,/root/cypress/integration/website/markets/markets-tests.ts',
+    #         '/root/cypress/integration/website/portfolio/portfolio-tests.ts',
+    #         '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
+    #         '/root/cypress/integration/website/activity/spot-activity-tests.ts',
+    #         '/root/cypress/integration/website/activity/positions-activity-tests.ts'
+    #       ]
     needs: build
     env:
       DEX_IMAGE_TAG: $GIT_BRANCH_NAME
@@ -107,8 +105,6 @@ jobs:
       - name: Get branch name
         id: git-branch-name
         uses: EthanSK/git-branch-name-action@v1
-      - name: Print dex image tag
-        run: echo ${{ env.DEX_IMAGE_TAG }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Download DEX artifact
@@ -129,7 +125,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: InjectiveLabs/injective-devops
-          ref: 'f/parallel'
+          ref: 'f/standalone_tweak'
           token: ${{ secrets.BARTEKS_PAT }}
           path: ./injective-devops
       - name: Download Docker images
@@ -153,15 +149,16 @@ jobs:
       - name: Start standalone network
         run: |
           cd injective-devops/network/standalone
-          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}  --build-arg ALCHEMY_ENDPOINT="https://eth-kovan.alchemyapi.io/v2/${{ secrets.APP_ALCHEMY_KOVAN_KEY }}"
-          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
-      - name: Execute Cypress tests
-        run: |
-          cd injective-devops/network/standalone
-          export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
-          export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
-          export CYPRESS_SPEC_FILE=${{ matrix.specs }}
-          export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
-          export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
-          export BASE_URL="http://localhost/"
-          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}
+          docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up
+      # docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
+      # - name: Execute Cypress tests
+      #   run: |
+      #     cd injective-devops/network/standalone
+      #     export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
+      #     export CYPRESS_RECORD_KEY=${{ secrets.CYPRESS_RECORD_KEY }}
+      #     export CYPRESS_SPEC_FILE=${{ matrix.specs }}
+      #     export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
+      #     export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
+      #     export BASE_URL="http://localhost/"
+      #     docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml run injective-cypress
