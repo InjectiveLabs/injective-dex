@@ -20,13 +20,6 @@ jobs:
           repository: InjectiveLabs/injective-dex
           ref: ${{ github.ref }}
           path: ./injective-dex
-      - name: Restore cached Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-single-buildx-${{ env.GIT_BRANCH_NAME }}
-          restore-keys: |
-            ${{ runner.os }}-single-buildx
       - name: Build DEX image
         uses: docker/build-push-action@v2
         with:
@@ -34,24 +27,15 @@ jobs:
           file: ./injective-dex/.github/Dockerfile
           push: false
           tags: public.ecr.aws/l9h3g6c6/injective-dex:${{ env.GIT_BRANCH_NAME }}
-          outputs: type=docker,dest=/tmp/dex-image.tar
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          outputs: type=docker,dest=/tmp/dex-image-2.tar
           build-args: |
             DEX_FEE_RECIPIENT=${{ secrets.APP_FEE_RECIPIENT }}
             EXCHANGE_ALCHEMY_API_KOVAN_KEY='https://eth-kovan.alchemyapi.io/v2/${{ secrets.APP_ALCHEMY_KOVAN_KEY }}'
-      # Temp fix
-      # https://github.com/docker/build-push-action/issues/252
-      # https://github.com/moby/buildkit/issues/1896
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Upload DEX artifact
         uses: actions/upload-artifact@v2
         with:
-          name: dex-image
-          path: /tmp/dex-image.tar
+          name: dex-image-2
+          path: /tmp/dex-image-2.tar
       - name: Checkout cypress-ts repo
         uses: actions/checkout@master
         with:
@@ -70,8 +54,8 @@ jobs:
       - name: Upload Cypress artifact
         uses: actions/upload-artifact@v2
         with:
-          name: cypress-image
-          path: /tmp/cypress-image.tar
+          name: cypress-image-2
+          path: /tmp/cypress-image-2.tar
           retention-days: 1
   run_cypress_tests:
     name: 'Run Cypress intergration tests'
@@ -110,17 +94,17 @@ jobs:
       - name: Download DEX artifact
         uses: actions/download-artifact@v2
         with:
-          name: dex-image
+          name: dex-image-2
           path: /tmp
       - name: Download Cypress artifact
         uses: actions/download-artifact@v2
         with:
-          name: cypress-image
+          name: cypress-image-2
           path: /tmp
       - name: Load Docker images
         run: |
-          docker load --input /tmp/dex-image.tar
-          docker load --input /tmp/cypress-image.tar
+          docker load --input /tmp/dex-image-2.tar
+          docker load --input /tmp/cypress-image-2.tar
       - name: Checkout injective-devops
         uses: actions/checkout@master
         with:
@@ -130,7 +114,7 @@ jobs:
           path: ./injective-devops
       - name: Download Docker images
         run: |
-          DOCKER_IMAGES=('public.ecr.aws/l9h3g6c6/injective-exchange:prod' 'public.ecr.aws/l9h3g6c6/injective-core:prod' 'public.ecr.aws/l9h3g6c6/injective-trading-bot:latest' 'public.ecr.aws/l9h3g6c6/injective-liquidator-bot:latest')
+          DOCKER_IMAGES=('public.ecr.aws/l9h3g6c6/injective-exchange:staging' 'public.ecr.aws/l9h3g6c6/injective-core:prod' 'public.ecr.aws/l9h3g6c6/injective-trading-bot:latest' 'public.ecr.aws/l9h3g6c6/injective-liquidator-bot:latest')
           echo "Downloading all docker images required by standalone network"
           echo "Using throttle to avoid Amazon ECR's rate limting."
           for image in "${DOCKER_IMAGES[@]}"
