@@ -83,10 +83,10 @@ jobs:
         specs: [
             # '/root/cypress/integration/docker-healthcheck/docker-tests.ts'
             # '/root/cypress/integration/website/wallets/wallets-connections.ts,/root/cypress/integration/website/markets/markets-tests.ts',
-            '/root/cypress/integration/website/portfolio/portfolio-tests.ts',
+            '/root/cypress/integration/website/portfolio/portfolio-tests.ts'
             # '/root/cypress/integration/website/activity/derivatives-activity-tests.ts',
             # '/root/cypress/integration/website/activity/spot-activity-tests.ts',
-            '/root/cypress/integration/website/activity/positions-activity-tests.ts'
+            # '/root/cypress/integration/website/activity/positions-activity-tests.ts'
           ]
     needs: build
     env:
