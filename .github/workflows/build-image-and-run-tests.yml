@@ -50,7 +50,7 @@ jobs:
           file: ./cypress-ts/.github/Dockerfile
           push: false
           tags: injective-cypress:${{ env.GIT_BRANCH_NAME }}
-          outputs: type=docker,dest=/tmp/cypress-image.tar
+          outputs: type=docker,dest=/tmp/cypress-image-2.tar
       - name: Upload Cypress artifact
         uses: actions/upload-artifact@v2
         with:
