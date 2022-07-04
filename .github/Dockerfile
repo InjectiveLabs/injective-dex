@@ -9,7 +9,8 @@ ARG DEX_FEE_RECIPIENT
 ENV APP_BASE_URL=${APP_BASE_URL}
 RUN echo "APP_BASE_URL=$APP_BASE_URL" >> .env
 RUN echo "APP_NETWORK=local" >> .env
-RUN echo "CHAIN_ID=42" >> .env
+RUN echo "APP_CHAIN_ID=injective-777" >> .env
+RUN echo "APP_ETHEREUM_CHAIN_ID=42" >> .env
 RUN echo "ALCHEMY_ENDPOINT=$ALCHEMY_ENDPOINT" >> .env
 RUN echo "APP_FEE_RECIPIENT=$DEX_FEE_RECIPIENT" >> .env
 RUN yarn build
