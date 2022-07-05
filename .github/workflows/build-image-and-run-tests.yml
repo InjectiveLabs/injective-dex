@@ -65,12 +65,12 @@ jobs:
       fail-fast: false
       matrix:
         specs: [
-            # '/root/cypress/integration/docker-healthcheck/docker-tests.cy.ts'
-            # '/root/cypress/integration/website/wallets/wallets-connections.cy.ts,/root/cypress/integration/website/markets/markets-tests.cy.ts',
-            '/root/cypress/integration/website/portfolio/portfolio-tests.cy.ts'
-            # '/root/cypress/integration/website/activity/derivatives-activity-tests.cy.ts',
-            # '/root/cypress/integration/website/activity/spot-activity-tests.cy.ts',
-            # '/root/cypress/integration/website/activity/positions-activity-tests.cy.ts'
+            # '/root/cypress/e2e/docker-healthcheck/docker-tests.cy.ts'
+            # '/root/cypress/e2e/website/wallets/wallets-connections.cy.ts,/root/cypress/integration/website/markets/markets-tests.cy.ts',
+            '/root/cypress/e2e/website/portfolio/portfolio-tests.cy.ts'
+            # '/root/cypress/e2e/website/activity/derivatives-activity-tests.cy.ts',
+            # '/root/cypress/e2e/website/activity/spot-activity-tests.cy.ts',
+            # '/root/cypress/e2e/website/activity/positions-activity-tests.cy.ts'
           ]
     needs: build
     env:
