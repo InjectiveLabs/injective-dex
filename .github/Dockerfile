@@ -3,7 +3,7 @@ WORKDIR /src
 COPY package.json yarn.lock ./
 RUN --mount=type=cache,target=/src/.yarn YARN_CACHE_FOLDER=/src/.yarn yarn install --frozen-lockfile
 COPY . .
-ARG APP_BASE_URL="http://localhost:80"
+ARG APP_BASE_URL="https://localhost:80"
 ARG ALCHEMY_ENDPOINT
 ARG DEX_FEE_RECIPIENT
 ENV APP_BASE_URL=${APP_BASE_URL}
@@ -13,6 +13,10 @@ RUN echo "APP_CHAIN_ID=injective-777" >> .env
 RUN echo "APP_ETHEREUM_CHAIN_ID=42" >> .env
 RUN echo "ALCHEMY_ENDPOINT=$ALCHEMY_ENDPOINT" >> .env
 RUN echo "APP_FEE_RECIPIENT=$DEX_FEE_RECIPIENT" >> .env
+RUN echo "APP_EXCHANGE_API_ENDPOINT=https://localhost:4444" >> .env
+RUN echo "APP_CHRONOS_API_ENDPOINT=https://localhost:4444" >> .env
+RUN echo "APP_SENTRY_GRPC_ENDPOINT=https://localhost:9091" >> .env
+RUN echo "APP_SENTRY_HTTP_ENDPOINT=https://localhost:9091" >> .env
 RUN yarn build
 RUN yarn generate
 
