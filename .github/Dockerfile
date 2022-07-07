@@ -13,6 +13,15 @@ RUN echo "APP_CHAIN_ID=injective-777" >> .env
 RUN echo "APP_ETHEREUM_CHAIN_ID=42" >> .env
 RUN echo "ALCHEMY_ENDPOINT=$ALCHEMY_ENDPOINT" >> .env
 RUN echo "APP_FEE_RECIPIENT=$DEX_FEE_RECIPIENT" >> .env
+RUN echo "GAS_FREE_DEPOSIT_REBATE_ENABLED=true" >> .env
+RUN echo "META_TAGS_ENABLED=true" >> .env
+RUN echo "MAINTENANCE_ENABLED=false" >> .env
+RUN echo "METRICS_ENABLED=false" >> .env
+RUN echo "GEO_IP_RESTRICTIONS_ENABLED=false" >> .env
+RUN echo "SHOW_AUCTION_COUNTDOWN=false" >> .env
+RUN echo "ORDERBOOK_POLLING_ENABLED=false" >> .env
+RUN echo "REFERRALS_ENABLED=false" >> .env
+
 RUN yarn build
 RUN yarn generate
 
