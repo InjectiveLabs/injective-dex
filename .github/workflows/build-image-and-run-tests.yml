@@ -61,16 +61,6 @@ jobs:
     name: 'Run Cypress intergration tests'
     runs-on: ubuntu-20.04
     timeout-minutes: 80
-    strategy:
-      fail-fast: false
-      matrix:
-        specs: [
-            # '/root/cypress/e2e/website/wallets/wallets-connections.cy.ts,/root/cypress/e2e/website/markets/markets-tests.cy.ts',
-            '/root/cypress/e2e/website/portfolio/portfolio-tests.cy.ts'
-            # '/root/cypress/e2e/website/activity/derivatives-activity-tests.cy.ts',
-            # '/root/cypress/e2e/website/activity/spot-activity-tests.cy.ts',
-            # '/root/cypress/e2e/website/activity/positions-activity-tests.cy.ts'
-          ]
     needs: build
     env:
       DEX_IMAGE_TAG: $GIT_BRANCH_NAME
@@ -132,11 +122,8 @@ jobs:
       - name: Start standalone network
         run: |
           cd injective-devops/network/standalone
+          echo "${{ env.DEX_IMAGE_TAG }}"
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}
-      # docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
-      # - name: Execute Cypress tests
-      #   run: |
-          cd injective-devops/network/standalone
           export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
           export CYPRESS_RECORD_KEY="0082f8fa-eb95-4db6-b487-66d18b6d38ce"
           export CYPRESS_SPEC_FILE=${{ matrix.specs }}
