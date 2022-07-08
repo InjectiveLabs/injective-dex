@@ -1,7 +1,5 @@
 FROM node:16 as builder
 WORKDIR /src
-COPY package.json yarn.lock ./
-RUN --mount=type=cache,target=/src/.yarn YARN_CACHE_FOLDER=/src/.yarn yarn install --frozen-lockfile
 COPY . .
 ARG APP_BASE_URL="https://localhost"
 ARG ALCHEMY_ENDPOINT
@@ -23,6 +21,9 @@ RUN echo "ORDERBOOK_POLLING_ENABLED=false" >> .env
 RUN echo "REFERRALS_ENABLED=false" >> .env
 
 RUN cat .env
+
+COPY package.json yarn.lock ./
+RUN --mount=type=cache,target=/src/.yarn YARN_CACHE_FOLDER=/src/.yarn yarn install --frozen-lockfile
 
 RUN yarn build
 RUN yarn generate
