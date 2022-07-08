@@ -22,8 +22,6 @@ RUN echo "SHOW_AUCTION_COUNTDOWN=false" >> .env
 RUN echo "ORDERBOOK_POLLING_ENABLED=false" >> .env
 RUN echo "REFERRALS_ENABLED=false" >> .env
 
-RUN cat .env
-
 COPY package.json yarn.lock ./
 RUN --mount=type=cache,target=/src/.yarn YARN_CACHE_FOLDER=/src/.yarn yarn install --frozen-lockfile
 
