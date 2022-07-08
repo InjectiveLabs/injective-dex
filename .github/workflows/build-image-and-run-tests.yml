@@ -122,7 +122,6 @@ jobs:
       - name: Start standalone network
         run: |
           cd injective-devops/network/standalone
-          echo "${{ env.DEX_IMAGE_TAG }}"
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}
           export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
           export CYPRESS_RECORD_KEY="0082f8fa-eb95-4db6-b487-66d18b6d38ce"
@@ -130,5 +129,4 @@ jobs:
           export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
           export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
           export BASE_URL="https://localhost/"
-          printenv
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml up

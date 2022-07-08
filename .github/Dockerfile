@@ -22,6 +22,8 @@ RUN echo "SHOW_AUCTION_COUNTDOWN=false" >> .env
 RUN echo "ORDERBOOK_POLLING_ENABLED=false" >> .env
 RUN echo "REFERRALS_ENABLED=false" >> .env
 
+RUN cat .env
+
 RUN yarn build
 RUN yarn generate
 
