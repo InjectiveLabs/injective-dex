@@ -130,4 +130,5 @@ jobs:
           export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
           export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
           export BASE_URL="https://localhost/"
+          printenv
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml -f docker-compose-cypress.yaml up
