@@ -30,7 +30,7 @@ jobs:
           outputs: type=docker,dest=/tmp/dex-image-2.tar
           build-args: |
             DEX_FEE_RECIPIENT=${{ secrets.APP_FEE_RECIPIENT }}
-            EXCHANGE_ALCHEMY_API_KOVAN_KEY='https://eth-kovan.alchemyapi.io/v2/${{ secrets.APP_ALCHEMY_KOVAN_KEY }}'
+            ALCHEMY_ENDPOINT='https://eth-kovan.alchemyapi.io/v2/${{ secrets.APP_ALCHEMY_KOVAN_KEY }}'
       - name: Upload DEX artifact
         uses: actions/upload-artifact@v2
         with:
