@@ -27,7 +27,7 @@ jobs:
           file: ./injective-dex/.github/Dockerfile
           push: false
           tags: public.ecr.aws/l9h3g6c6/injective-dex:${{ env.GIT_BRANCH_NAME }}
-          outputs: type=docker,dest=/tmp/dex-image-2.tar
+          outputs: type=docker,dest=/tmp/dex-image.tar
           build-args: |
             DEX_FEE_RECIPIENT=${{ secrets.APP_FEE_RECIPIENT }}
             APP_ALCHEMY_KOVAN_KEY=${{ secrets.APP_ALCHEMY_KOVAN_KEY }}
@@ -35,13 +35,13 @@ jobs:
       - name: Upload DEX artifact
         uses: actions/upload-artifact@v2
         with:
-          name: dex-image-2
-          path: /tmp/dex-image-2.tar
+          name: dex-image
+          path: /tmp/dex-image.tar
       - name: Checkout cypress-ts repo
         uses: actions/checkout@master
         with:
           repository: Tofel/cypress-ts
-          ref: 'f/bump_ts_packages_2_cypress_10'
+          ref: 'f/dont-block-requests'
           token: ${{ secrets.BARTEKS_PAT }}
           path: ./cypress-ts
       - name: Build Cypress test image
@@ -51,12 +51,12 @@ jobs:
           file: ./cypress-ts/.github/Dockerfile
           push: false
           tags: injective-cypress:${{ env.GIT_BRANCH_NAME }}
-          outputs: type=docker,dest=/tmp/cypress-image-2.tar
+          outputs: type=docker,dest=/tmp/cypress-image.tar
       - name: Upload Cypress artifact
         uses: actions/upload-artifact@v2
         with:
-          name: cypress-image-2
-          path: /tmp/cypress-image-2.tar
+          name: cypress-image
+          path: /tmp/cypress-image.tar
           retention-days: 1
   run_cypress_tests:
     name: 'Run Cypress intergration tests'
@@ -66,11 +66,11 @@ jobs:
       fail-fast: false
       matrix:
         specs: [
-            # '/root/cypress/e2e/website/wallets/wallets-connections.cy.ts,/root/cypress/e2e/website/markets/markets-tests.cy.ts',
+            '/root/cypress/e2e/website/wallets/wallets-connections.cy.ts,/root/cypress/e2e/website/markets/markets-tests.cy.ts',
             '/root/cypress/e2e/website/portfolio/portfolio-tests.cy.ts'
-            # '/root/cypress/e2e/website/activity/derivatives-activity-tests.cy.ts',
-            # '/root/cypress/e2e/website/activity/spot-activity-tests.cy.ts',
-            # '/root/cypress/e2e/website/activity/positions-activity-tests.cy.ts'
+            '/root/cypress/e2e/website/activity/derivatives-activity-tests.cy.ts',
+            '/root/cypress/e2e/website/activity/spot-activity-tests.cy.ts',
+            '/root/cypress/e2e/website/activity/positions-activity-tests.cy.ts'
           ]
     needs: build
     env:
@@ -94,17 +94,17 @@ jobs:
       - name: Download DEX artifact
         uses: actions/download-artifact@v2
         with:
-          name: dex-image-2
+          name: dex-image
           path: /tmp
       - name: Download Cypress artifact
         uses: actions/download-artifact@v2
         with:
-          name: cypress-image-2
+          name: cypress-image
           path: /tmp
       - name: Load Docker images
         run: |
-          docker load --input /tmp/dex-image-2.tar
-          docker load --input /tmp/cypress-image-2.tar
+          docker load --input /tmp/dex-image.tar
+          docker load --input /tmp/cypress-image.tar
       - name: Checkout injective-devops
         uses: actions/checkout@master
         with:
