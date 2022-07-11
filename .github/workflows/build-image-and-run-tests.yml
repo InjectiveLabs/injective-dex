@@ -30,10 +30,10 @@ jobs:
           echo "All images downloaded"
       - name: Export Docker images
         run: |
-          docker save -o /tmp/injective-exchange.tar public.ecr.aws/l9h3g6c6/injective-exchange:experimental
-          docker save -o /tmp/injective-core.tar public.ecr.aws/l9h3g6c6/injective-core:prod
-          docker save -o /tmp/injective-trading-bot.tar public.ecr.aws/l9h3g6c6/injective-trading-bot:latest
-          docker save -o /tmp/injective-liquidator-bot.tar public.ecr.aws/l9h3g6c6/injective-liquidator-bot:latest
+          docker save -o /tmp/exchange-image.tar public.ecr.aws/l9h3g6c6/injective-exchange:experimental
+          docker save -o /tmp/core-image.tar public.ecr.aws/l9h3g6c6/injective-core:prod
+          docker save -o /tmp/trading-bot-image.tar public.ecr.aws/l9h3g6c6/injective-trading-bot:latest
+          docker save -o /tmp/liquidator-bot-image.tar public.ecr.aws/l9h3g6c6/injective-liquidator-bot:latest
       - name: Upload Exchange image
         uses: actions/upload-artifact@v2
         with:
@@ -169,6 +169,7 @@ jobs:
           path: /tmp
       - name: Load Docker images
         run: |
+          ls -al /tmp
           docker load --input /tmp/dex-image.tar
           docker load --input /tmp/cypress-image.tar
           docker load --input /tmp/exchange-image.tar
