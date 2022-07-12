@@ -86,7 +86,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: Tofel/cypress-ts
-          ref: 'f/dont-block-requests'
+          ref: 'f/funding_payments'
           token: ${{ secrets.BARTEKS_PAT }}
           path: ./cypress-ts
       - name: Build Cypress test image
@@ -112,7 +112,7 @@ jobs:
       matrix:
         specs:
           [
-            '/root/cypress/e2e/website/wallets/wallets-connections.cy.ts,/root/cypress/e2e/website/markets/markets-tests.cy.ts',
+            '/root/cypress/e2e/website/wallets/wallets-connections.cy.ts,/root/cypress/e2e/website/markets/markets-tests.cy.ts,/root/cypress/e2e/website/activity/positions-funding-payment-tests.cy',
             '/root/cypress/e2e/website/portfolio/portfolio-tests.cy.ts',
             '/root/cypress/e2e/website/activity/derivatives-activity-tests.cy.ts',
             '/root/cypress/e2e/website/activity/spot-activity-tests.cy.ts',
@@ -180,19 +180,24 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: InjectiveLabs/injective-devops
-          ref: 'f/adjust_to_july_2022_upgrade'
+          ref: 'f/funding_payment'
           token: ${{ secrets.BARTEKS_PAT }}
           path: ./injective-devops
       - name: Start standalone network
         run: |
           cd injective-devops/network/standalone
+          export GENESIS_TWEAK_FUNDING_RATE=false
+          if [[ "${{ matrix.specs }}" == *funding* ]]; then
+            echo "Genesis will have a very frequent funding payment interval to ease testing"
+            export GENESIS_TWEAK_FUNDING_RATE=true
+          fi
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml build --build-arg IMAGE_TAG=${{ env.DEX_IMAGE_TAG }}
           docker-compose -f docker-compose-base.yaml -f docker-compose-dex.yaml up -d
       - name: Execute Cypress tests
         run: |
           cd injective-devops/network/standalone
           export CYPRESS_TEST_TAG=${{ env.GIT_BRANCH_NAME }}
-          export CYPRESS_RECORD_KEY="584d4202-b81f-481d-9e74-5f72e97e907c"
+          export CYPRESS_RECORD_KEY=584d4202-b81f-481d-9e74-5f72e97e907c
           export CYPRESS_SPEC_FILE=${{ matrix.specs }}
           export CYPRESS_GROUP="${{ steps.uuid.outputs.UUID }}"
           export CYPRESS_BUILD_ID="${{ env.CYPRESS_BUILD_ID }}"
