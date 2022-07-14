@@ -110,7 +110,8 @@ import {
   UiDerivativeTrade,
   UiDerivativeMarketWithToken,
   ZERO_IN_BASE,
-  BankBalanceWithTokenAndBalanceInBase
+  BankBalanceWithTokenAndBalanceInBase,
+  BankBalanceWithTokenAndBalance
 } from '@injectivelabs/sdk-ui-ts'
 import { TradeDirection, TradeExecutionType } from '@injectivelabs/ts-types'
 import { Token } from '@injectivelabs/token-metadata'
@@ -249,7 +250,16 @@ export default Vue.extend({
     },
 
     supportedTokens(): BankBalanceWithTokenAndBalanceInBase[] {
-      return this.$store.state.activity.supportedTokens
+      const supportedTokens = this.$store.state.activity.supportedTokens
+
+      return supportedTokens.filter(
+        (token: BankBalanceWithTokenAndBalance) =>
+          !!this.markets.find(
+            (market) =>
+              market.baseToken.denom === token.denom ||
+              market.quoteToken.denom === token.denom
+          )
+      )
     },
 
     showClearAllButton(): boolean {

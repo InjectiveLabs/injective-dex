@@ -116,7 +116,7 @@
 <script lang="ts">
 import { BigNumberInBase, Status, StatusType } from '@injectivelabs/utils'
 import Vue from 'vue'
-import { UiSpotTrade, UiSpotMarketWithToken, BankBalanceWithTokenAndBalanceInBase, ZERO_IN_BASE } from '@injectivelabs/sdk-ui-ts'
+import { UiSpotTrade, UiSpotMarketWithToken, BankBalanceWithTokenAndBalanceInBase, ZERO_IN_BASE, BankBalanceWithTokenAndBalance } from '@injectivelabs/sdk-ui-ts'
 import { TradeExecutionType, TradeDirection } from '@injectivelabs/ts-types/dist/trade'
 import { Token } from '@injectivelabs/token-metadata'
 import Trade from '~/components/partials/common/trade/trade.vue'
@@ -253,7 +253,16 @@ export default Vue.extend({
     },
 
     supportedTokens(): BankBalanceWithTokenAndBalanceInBase[] {
-      return this.$store.state.activity.supportedTokens
+      const supportedTokens = this.$store.state.activity.supportedTokens
+
+      return supportedTokens.filter(
+        (token: BankBalanceWithTokenAndBalance) =>
+          !!this.markets.find(
+            (market) =>
+              market.baseToken.denom === token.denom ||
+              market.quoteToken.denom === token.denom
+          )
+      )
     },
 
     showClearAllButton(): boolean {

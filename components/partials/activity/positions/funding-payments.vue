@@ -3,7 +3,9 @@
     <div class="w-full h-full flex flex-col">
       <VCardTableWrap>
         <template #actions>
-          <div class="col-span-12 lg:col-span-8 grid grid-cols-5 sm:grid-cols-4 gap-4 w-full">
+          <div
+            class="col-span-12 lg:col-span-8 grid grid-cols-5 sm:grid-cols-4 gap-4 w-full"
+          >
             <TokenSelector
               class="token-selector__token-only"
               :value="selectedToken"
@@ -107,7 +109,12 @@
 <script lang="ts">
 import { BigNumberInBase, Status, StatusType } from '@injectivelabs/utils'
 import Vue from 'vue'
-import { BankBalanceWithTokenAndBalanceInBase, UiDerivativeMarketWithToken, ZERO_IN_BASE } from '@injectivelabs/sdk-ui-ts'
+import {
+  BankBalanceWithTokenAndBalance,
+  BankBalanceWithTokenAndBalanceInBase,
+  UiDerivativeMarketWithToken,
+  ZERO_IN_BASE
+} from '@injectivelabs/sdk-ui-ts'
 import { FundingPayment } from '@injectivelabs/sdk-ts'
 import { Token } from '@injectivelabs/token-metadata'
 import FundingPaymentsTableHeader from '~/components/partials/common/derivatives/funding-payments-table-header.vue'
@@ -185,7 +192,16 @@ export default Vue.extend({
     },
 
     supportedTokens(): BankBalanceWithTokenAndBalanceInBase[] {
-      return this.$store.state.activity.supportedTokens
+      const supportedTokens = this.$store.state.activity.supportedTokens
+
+      return supportedTokens.filter(
+        (token: BankBalanceWithTokenAndBalance) =>
+          !!this.markets.find(
+            (market) =>
+              market.baseToken.denom === token.denom ||
+              market.quoteToken.denom === token.denom
+          )
+      )
     },
 
     showClearAllButton(): boolean {
@@ -201,11 +217,14 @@ export default Vue.extend({
     updateFundingPayments() {
       this.status.setLoading()
 
-      const marketId = this.markets.find(m => {
-        return m.baseToken.symbol === this.selectedToken?.symbol || m.quoteToken.symbol === this.selectedToken?.symbol
+      const marketId = this.markets.find((m) => {
+        return (
+          m.baseToken.symbol === this.selectedToken?.symbol ||
+          m.quoteToken.symbol === this.selectedToken?.symbol
+        )
       })?.marketId
 
-      const marketIds = this.markets.map(market => market.marketId)
+      const marketIds = this.markets.map((market) => market.marketId)
 
       Promise.all([
         this.$accessor.activity.fetchSubaccountFundingPayments({
