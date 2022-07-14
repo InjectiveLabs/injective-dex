@@ -34,7 +34,6 @@
           'text-red-500': total.lt(0)
         }"
         :decimals="UI_DEFAULT_MAX_DISPLAY_DECIMALS"
-        :prefix="total.lt(0) ? '-' : ''"
         :number="total"
       >
         <span slot="addon" class="text-2xs text-gray-500">
@@ -106,25 +105,34 @@ export default Vue.extend({
     market(): UiDerivativeMarketWithToken | undefined {
       const { markets, fundingPayment } = this
 
-      return markets.find((m) => m.marketId === fundingPayment.marketId)
+      const result = markets.find((m) => m.marketId === fundingPayment.marketId)
+
+      if (!result) {
+        // TODO: No valid market found in exchangeDerivativesApi.fetchMarkets() response.
+        // Find a way to get correct market anyway.
+      }
+
+      return result
     },
 
     total(): BigNumberInBase {
       const { market, fundingPayment } = this
 
-      if (!market || !fundingPayment.amount) {
+      if (!fundingPayment.amount) {
         return ZERO_IN_BASE
       }
 
-      return new BigNumberInWei(fundingPayment.amount).toBase(
-        market.quoteToken.decimals
-      )
+      const decimals = market
+        ? market.quoteToken.decimals
+        : UI_DEFAULT_AMOUNT_DISPLAY_DECIMALS
+
+      return new BigNumberInWei(fundingPayment.amount).toBase(decimals)
     },
 
     time(): string {
-      const { market, fundingPayment } = this
+      const { fundingPayment } = this
 
-      if (!market || !fundingPayment.timestamp) {
+      if (!fundingPayment.timestamp) {
         return ''
       }
 

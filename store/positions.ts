@@ -26,6 +26,7 @@ import { streamSubaccountPositions } from '~/app/client/streams/derivatives'
 import { getRoundedLiquidationPrice } from '~/app/client/utils/derivatives'
 import { binaryOptions, derivatives } from '~/routes.config'
 import { exchangeDerivativesApi, msgBroadcastClient } from '~/app/Services'
+// import { ActivityFetchOptions } from '~/types'
 
 const initialStateFactory = () => ({
   orderbooks: {} as Record<string, UiDerivativeOrderbook>,
@@ -104,13 +105,19 @@ export const actions = actionTree(
       commit('reset')
     },
 
-    async fetchSubaccountPositions({ commit }) {
+    async fetchSubaccountPositions(
+      { commit }
+      // fetchPositionsOptions: FetchPositionsOptions | undefined
+    ) {
       const { subaccount } = this.app.$accessor.account
       const { isUserWalletConnected } = this.app.$accessor.wallet
 
       if (!isUserWalletConnected || !subaccount) {
         return
       }
+
+      // const pagination = fetchPositionsOptions?.pagination
+      // const filters = fetchPositionsOptions?.filters
 
       const positions = await exchangeDerivativesApi.fetchPositions({
         subaccountId: subaccount.subaccountId
