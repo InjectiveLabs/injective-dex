@@ -349,7 +349,8 @@ export const actions = actionTree(
       _,
       {
         market,
-        position
+        position,
+        reduceOnlyOrders
       }: {
         market?: UiDerivativeMarketWithToken
         position: UiPosition
